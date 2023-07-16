@@ -12,10 +12,12 @@ func TestServer(t *testing.T) {
 	engine := gin.Default()
 	// 服务器对文件进行保存，提供断点续传功能
 	engine.GET("/upload", UploadHandler)
-
+	engine.GET("/download", DownLoadHandler)
+	engine.GET("/stream", StreamHandler)
 	engine.Run(":8080")
 }
 
+// 文件上传,支持断续重传
 func UploadHandler(c *gin.Context) {
 	// 目前保存的字节数
 	var offset int64 = 0
@@ -62,6 +64,52 @@ func UploadHandler(c *gin.Context) {
 		"message": "success",
 		"data":    nil,
 	})
+}
+
+// 文件的形式返回字节流
+func DownLoadHandler(c *gin.Context) {
+	filename := "宁宁.png"
+	file, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		ErrorResp(c)
+		return
+	}
+
+	c.Writer.Header().Add("Content-Type", "application/octet-stream")
+	c.Writer.Header().Add("Content-Disposition", "attachment; filename="+filename)
+	//c.Writer.Header().Add("Content-Length", fmt.Sprintf("%d", len(file)))
+	c.Writer.Header().Add("Accept-Ranges", "bytes")
+	_, err = c.Writer.Write(file)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		ErrorResp(c)
+		return
+	}
+	return
+}
+
+// 返回字节流
+func StreamHandler(c *gin.Context) {
+	filename := "宁宁.png"
+	file, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		ErrorResp(c)
+		return
+	}
+
+	//c.Writer.Header().Add("Content-Type", "application/octet-stream")
+	//c.Writer.Header().Add("Content-Disposition", "attachment; filename="+filename)
+	//c.Writer.Header().Add("Content-Length", fmt.Sprintf("%d", len(file)))
+	//c.Writer.Header().Add("Accept-Ranges", "bytes")
+	_, err = c.Writer.Write(file)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		ErrorResp(c)
+		return
+	}
+	return
 }
 
 func ErrorResp(c *gin.Context) {
