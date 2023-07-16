@@ -87,14 +87,14 @@ func TestClientDownload(t *testing.T) {
 		fmt.Printf("%s\n", err)
 		return
 	}
-	request.Header.Set("Range", "bytes=0-1024")
+	request.Header.Set("Range", "bytes=0-10240")
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		return
 	}
 
-	file, err := os.OpenFile("client.png", os.O_CREATE, os.ModePerm)
+	file, err := os.OpenFile("temp.png", os.O_CREATE, os.ModePerm)
 	defer file.Close()
 
 	// 读取返回的字节流
@@ -114,7 +114,7 @@ func TestClientStream(t *testing.T) {
 		return
 	}
 
-	request.Header.Set("Range", "bytes=0-1024")
+	request.Header.Set("Range", "bytes=0-10240")
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
 		fmt.Printf("%s\n", err)
@@ -122,7 +122,7 @@ func TestClientStream(t *testing.T) {
 	}
 
 	// 打开文件
-	file, err := os.OpenFile("client.png", os.O_CREATE, os.ModePerm)
+	file, err := os.OpenFile("temp.png", os.O_CREATE, os.ModePerm)
 	defer file.Close()
 
 	// 读取字节流

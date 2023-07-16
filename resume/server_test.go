@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
+	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -78,9 +81,8 @@ func DownLoadHandler(c *gin.Context) {
 
 	c.Writer.Header().Add("Content-Type", "application/octet-stream")
 	c.Writer.Header().Add("Content-Disposition", "attachment; filename="+filename)
-	//c.Writer.Header().Add("Content-Length", fmt.Sprintf("%d", len(file)))
-	c.Writer.Header().Add("Accept-Ranges", "bytes")
-	_, err = c.Writer.Write(file)
+
+	err = SupportRangeResp(c, file)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		ErrorResp(c)
@@ -90,7 +92,7 @@ func DownLoadHandler(c *gin.Context) {
 }
 
 // 返回字节流
-// TODO: 支持range
+// 支持range
 func StreamHandler(c *gin.Context) {
 	filename := "宁宁.png"
 	file, err := os.ReadFile(filename)
@@ -100,16 +102,36 @@ func StreamHandler(c *gin.Context) {
 		return
 	}
 
-	//c.Writer.Header().Add("Content-Type", "application/octet-stream")
-	//c.Writer.Header().Add("Content-Disposition", "attachment; filename="+filename)
-	//c.Writer.Header().Add("Content-Length", fmt.Sprintf("%d", len(file)))
-	//c.Writer.Header().Add("Accept-Ranges", "bytes")
-	_, err = c.Writer.Write(file)
+	c.Writer.Header().Add("Content-Type", "application/octet-stream")
+	c.Writer.Header().Add("Content-Disposition", "attachment; filename="+filename)
+
+	err = SupportRangeResp(c, file)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		ErrorResp(c)
 		return
 	}
+	return
+}
+
+// 返回字节流并且支持range字段
+func SupportRangeResp(c *gin.Context, file []byte) (err error) {
+	ranges := c.Request.Header.Get("Range")
+	var start, end int64
+	if ranges != "" && strings.Contains(ranges, "bytes=") && strings.Contains(ranges, "-") {
+		fmt.Sscanf(ranges, "bytes=%d-%d", &start, &end)
+		if start < 0 || end < 0 || start > end {
+			c.Writer.WriteHeader(http.StatusRequestedRangeNotSatisfiable)
+			return
+		}
+		c.Writer.Header().Add("Content-Range", fmt.Sprintf("bytes %v-%v/%v", start, end, len(file)))
+	} else {
+		start = 0
+		end = int64(len(file))
+	}
+	c.Writer.Header().Add("Accept-Ranges", "bytes")
+	c.Writer.Header().Add("Content-Length", strconv.FormatInt(end-start, 10))
+	_, err = c.Writer.Write(file[start:end])
 	return
 }
 
