@@ -87,6 +87,8 @@ func TestClientDownload(t *testing.T) {
 		fmt.Printf("%s\n", err)
 		return
 	}
+
+	// 设置请求头，获取指定的范围的字节流
 	request.Header.Set("Range", "bytes=0-10240")
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
@@ -114,6 +116,7 @@ func TestClientStream(t *testing.T) {
 		return
 	}
 
+	// 设置请求头，获取指定的范围的字节流
 	request.Header.Set("Range", "bytes=0-10240")
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {

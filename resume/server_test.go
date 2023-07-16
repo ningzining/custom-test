@@ -116,19 +116,24 @@ func StreamHandler(c *gin.Context) {
 
 // 返回字节流并且支持range字段
 func SupportRangeResp(c *gin.Context, file []byte) (err error) {
+	// 获取header中的range字段并进行判断
 	ranges := c.Request.Header.Get("Range")
 	var start, end int64
 	if ranges != "" && strings.Contains(ranges, "bytes=") && strings.Contains(ranges, "-") {
 		fmt.Sscanf(ranges, "bytes=%d-%d", &start, &end)
+		// 参数异常则返回
 		if start < 0 || end < 0 || start > end {
 			c.Writer.WriteHeader(http.StatusRequestedRangeNotSatisfiable)
 			return
 		}
+
 		c.Writer.Header().Add("Content-Range", fmt.Sprintf("bytes %v-%v/%v", start, end, len(file)))
 	} else {
+		// 如果没有range字段或者异常则返回全部的文件字节流
 		start = 0
 		end = int64(len(file))
 	}
+	// 设置相关header返回
 	c.Writer.Header().Add("Accept-Ranges", "bytes")
 	c.Writer.Header().Add("Content-Length", strconv.FormatInt(end-start, 10))
 	_, err = c.Writer.Write(file[start:end])
