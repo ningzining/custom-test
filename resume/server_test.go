@@ -90,6 +90,7 @@ func DownLoadHandler(c *gin.Context) {
 }
 
 // 返回字节流
+// TODO: 支持range
 func StreamHandler(c *gin.Context) {
 	filename := "宁宁.png"
 	file, err := os.ReadFile(filename)
